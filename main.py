@@ -6,15 +6,12 @@ import os
 
 app = FastAPI(title="FusionSmart Energy API", version="1.0.0")
 
-# -----------------------------
-# Load model ONCE at startup
-# -----------------------------
+
 MODEL_PATH = os.getenv("MODEL_PATH", "Energy_Usage_Prediction_Model.pkl")
 
 try:
     model = joblib.load(MODEL_PATH)
 except Exception as e:
-    # Crash clearly if model missing/corrupt
     raise RuntimeError(f"Failed to load model at '{MODEL_PATH}': {e}")
 
 
@@ -40,12 +37,11 @@ def root():
 
 @app.post("/predict")
 def predict(req: PredictRequest):
-    # Keep EXACT feature order used in Streamlit/training
     x = np.array([[
         req.temperature, req.humidity, req.occupancy,
         req.ac, req.fan, req.fridge, req.plug,
         req.kitchen, req.pump, req.lighting, req.solar,
-        12, 15, 6  # Your fixed constants
+        12, 15, 6  
     ]], dtype=float)
 
     pred = float(model.predict(x)[0])
