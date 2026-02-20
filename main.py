@@ -1,10 +1,18 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
+from fastapi.middleware.cors import CORSMiddleware
 import joblib
 import numpy as np
 import os
 
-app = FastAPI(title="FusionSmart Energy API", version="1.0.0")
+app = FastAPI(title="Ecosync", version="1.0.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow all origins (fine for academic/demo)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 MODEL_PATH = os.getenv("MODEL_PATH", "Energy_Usage_Prediction_Model.pkl")
