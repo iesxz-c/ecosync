@@ -1,0 +1,39 @@
+{
+  "cli": {
+    "version": ">= 18.0.3",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_BASE": "https://ecosync-kpnf.onrender.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://itaxcvpqxxcsjczizogf.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_xgx3OW8mnM9d_j1qTOl8qg_HkKfxodz"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE": "https://ecosync-kpnf.onrender.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://itaxcvpqxxcsjczizogf.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_xgx3OW8mnM9d_j1qTOl8qg_HkKfxodz"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_BASE": "https://ecosync-kpnf.onrender.com",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://itaxcvpqxxcsjczizogf.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_xgx3OW8mnM9d_j1qTOl8qg_HkKfxodz"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
