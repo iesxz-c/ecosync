@@ -1,177 +1,113 @@
-EcoSync
-=======
+<a id="top"></a>
 
-EcoSync is a smart energy analytics app with a React Native (Expo) client and a FastAPI backend. The mobile app visualizes usage, predicts consumption, estimates CO2 impact, and calculates Chennai TANGEDCO bills. The backend serves prediction endpoints and related data.
+# EcoSync
 
-Table of Contents
------------------
-- Highlights
-- Demo
-- Screenshots
-- Tech Stack
-- Supabase Auth and Storage
-- Model Training (Notebook)
-- Repo Structure
-- Architecture Overview
-- Data Flow (Prediction)
-- Data Flow (Bills)
-- Mobile App (Expo)
-- Backend (FastAPI)
-- API Contract
-- Render Deployment
-- Environment Variables
-- Bill Calculation (Chennai TANGEDCO)
-- Build Profiles
-- Testing Checklist
-- Troubleshooting
-- License
+EcoSync is a full-stack smart energy analytics platform that combines a React Native (Expo) mobile app, a FastAPI inference backend, and a trained RandomForest model for household electricity prediction.
 
-Highlights
-----------
-- Mobile app: Expo Router, charts, analytics, billing, and exports (CSV/PDF/JPEG)
-- Backend: FastAPI prediction API
-- Deploy backend to Render for a public API base
-- Clean data flow with persistent prediction storage across tabs
+It helps users estimate daily power usage, CO2 emissions, appliance-level impact, and Chennai TANGEDCO bi-monthly bills, while also supporting auth, profile management, and media-based community posting through Supabase.
 
-Demo
-----
-- Mobile demo: run the Expo app locally or install the APK.
-- Backend demo: deploy FastAPI on Render and point the app to it.
+![Expo](https://img.shields.io/badge/Expo-54-black?logo=expo&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-1.5-F7931E?logo=scikitlearn&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-Auth%20%2B%20Storage-3ECF8E?logo=supabase&logoColor=white)
+![Render](https://img.shields.io/badge/Deploy-Render-4A8CFF?logo=render&logoColor=white)
+![License](https://img.shields.io/badge/License-Academic%20Use-lightgrey)
 
-Screenshots
------------
+## Quick Navigation
+
+| Topic | Jump |
+|---|---|
+| Why EcoSync | [Go](#why-ecosync) |
+| Feature Matrix | [Go](#feature-matrix) |
+| App Walkthrough | [Go](#app-walkthrough) |
+| Screenshots | [Go](#screenshots) |
+| Architecture Overview | [Go](#architecture-overview) |
+| Data Flow: Prediction | [Go](#data-flow-prediction) |
+| Data Flow: Bills | [Go](#data-flow-bills) |
+| Auth and Storage | [Go](#auth-and-storage) |
+| ML Model Training | [Go](#ml-model-training) |
+| Backend API | [Go](#backend-api) |
+| Local Setup | [Go](#local-setup) |
+| Deployment | [Go](#deployment) |
+| Billing Logic (Chennai TANGEDCO) | [Go](#billing-logic-chennai-tangedco) |
+| Testing Checklist | [Go](#testing-checklist) |
+| Troubleshooting | [Go](#troubleshooting) |
+| Project Structure | [Go](#project-structure) |
+| Roadmap | [Go](#roadmap) |
+| Contributing | [Go](#contributing) |
+| License | [Go](#license) |
+
+## Why EcoSync
+
+- Combines ML prediction, environmental impact, and tariff estimation in one app.
+- Keeps user flow practical: analysis output is persisted and reused in Home and Bills tabs.
+- Supports real user lifecycle: auth, onboarding guard, profile image updates, social media posts.
+- Includes export paths for reporting and sharing: CSV (analysis), PDF/JPEG (bills).
+
+[Back to top](#top)
+
+## Feature Matrix
+
+| Layer | What it does | Key technologies |
+|---|---|---|
+| Mobile App | Dashboard, analysis controls, charting, bill estimation, exports, posts, profile | Expo, Expo Router, React Native, Chart Kit |
+| Backend API | Hosts prediction endpoint and serves inference results | FastAPI, Uvicorn |
+| ML Engine | Predicts energy usage from environmental and appliance inputs | scikit-learn RandomForestRegressor, NumPy, Joblib |
+| Auth + Storage | User sessions and media storage for profiles/posts | Supabase Auth, Supabase Storage |
+| Deployment | Public API hosting + mobile build profiles | Render, EAS |
+
+[Back to top](#top)
+
+## App Walkthrough
+
+### Home
+- Shows a quick summary (`predicted_kwh`, `co2_kg`, top appliance, solar offset).
+- Loads persisted prediction if available; otherwise triggers a default prediction.
+- Refresh action re-runs summary and updates local storage.
+
+### Analysis
+- Main interactive dashboard for prediction.
+- Slider-driven inputs for weather, occupancy, and appliance loads.
+- Multiple views: overview, appliance analytics, room heatmap, emission insights.
+- Exports appliance report as CSV.
+
+### Bills
+- Reads latest persisted analysis result.
+- Converts daily prediction to bi-monthly units (`daily * 60`).
+- Applies Chennai TANGEDCO slabs and shows breakdown.
+- Exports bill report as PDF and JPEG.
+
+### Posts
+- Feed-style media posts with image + optional description.
+- Supports camera or gallery uploads.
+- Uses Supabase storage and fetches active posts.
+
+### Profile
+- Displays user identity and profile photo.
+- Supports profile image upload to Supabase bucket.
+- Supports sign-out flow.
+
+### Auth and Onboarding
+- Route guard controls access by auth state.
+- Unauthenticated users are redirected to login.
+- Authenticated users without onboarding completion are redirected to onboarding.
+- Completed users are routed to app tabs.
+
+[Back to top](#top)
+
+## Screenshots
+
 Add screenshots here to make the project easy to review.
 
-- Home: screenshots/home.png
-- Analysis: screenshots/analysis.png
-- Bills: screenshots/bills.png
-- Profile: screenshots/profile.png
+- Home: `screenshots/home.png`
+- Analysis: `screenshots/analysis.png`
+- Bills: `screenshots/bills.png`
+- Profile: `screenshots/profile.png`
 
-Tech Stack
-----------
-Mobile
-- Expo (React Native)
-- Expo Router
-- React Native Chart Kit
-- AsyncStorage
-- Expo Print, Expo Sharing, View Shot
-- Supabase Auth and Storage
+[Back to top](#top)
 
-Backend
-- FastAPI
-- Uvicorn
+## Architecture Overview
 
-ML
-- RandomForestRegressor (scikit-learn)
-- Pandas, NumPy
-- Joblib for model persistence
-
-Infra
-- Render (API hosting)
-- Supabase (Auth + Storage)
-
-Model Training (Notebook)
--------------------------
-Notebook: p2bl_project.ipynb
-
-The model training pipeline uses a RandomForestRegressor on a Chennai home energy dataset. The workflow:
-
-1) Load dataset from Google Drive
-2) Convert Timestamp into Hour, Day, Month features
-3) Split into train/test
-4) Train RandomForestRegressor
-5) Evaluate (MAE, RMSE, R2)
-6) Save model to Google Drive as .pkl
-
-Why RandomForestRegressor
--------------------------
-- Handles non-linear relationships between usage patterns and inputs
-- Robust to outliers and noisy sensor readings
-- Requires minimal feature scaling
-- Provides strong performance with limited tuning
-- Works well with mixed feature types (continuous + categorical-like)
-
-Notebook Training Flow
-----------------------
-```mermaid
-flowchart TD
-	A[Load CSV from Drive] --> B[Parse Timestamp]
-	B --> C[Create Hour/Day/Month]
-	C --> D[Drop Timestamp]
-	D --> E[Split Train/Test]
-	E --> F[Train Random Forest]
-	F --> G[Evaluate Metrics]
-	G --> H[Save Model .pkl]
-```
-
-Random Forest Working (High Level)
-----------------------------------
-```mermaid
-flowchart LR
-	X[Input Features] --> T1[Tree 1]
-	X --> T2[Tree 2]
-	X --> T3[Tree 3]
-	T1 --> A[Average]
-	T2 --> A
-	T3 --> A
-	A --> Y[Final Prediction]
-```
-
-Random Forest (Intuition)
--------------------------
-Random Forest builds many decision trees on random subsets of data and features. Each tree predicts energy usage, and the final output is the average of all tree predictions. This reduces overfitting and improves stability.
-
-Supabase Auth and Storage
--------------------------
-EcoSync uses Supabase for authentication and media storage. Auth sessions are persisted locally using AsyncStorage and auto-refresh tokens are enabled.
-
-Auth Flow
----------
-```mermaid
-sequenceDiagram
-	autonumber
-	participant U as User
-	participant A as Expo App
-	participant S as Supabase Auth
-	participant L as AsyncStorage
-
-	U->>A: Sign up / Login
-	A->>S: Auth request
-	S-->>A: Session + tokens
-	A->>L: Persist session
-	A-->>U: Access granted
-```
-
-Storage Buckets
----------------
-- profiles: profile images (upsert by userId)
-- posts: post media (unique files per upload)
-
-Storage Flow (Uploads)
-----------------------
-```mermaid
-flowchart LR
-	App[Expo App] -->|uploadProfileImage| Profiles[Bucket: profiles]
-	App -->|uploadPostImage| Posts[Bucket: posts]
-	Profiles --> Public[Public URL]
-	Posts --> Public
-```
-
-Implementation Notes
---------------------
-- Profile image path: {userId}/profile.{ext}
-- Post image path: {userId}/{timestamp}.{ext}
-- Public URLs are returned for display after upload
-
-Repo Structure
---------------
-- main.py: FastAPI backend (prediction API)
-- requirements.txt: Python backend dependencies
-- render.yaml: Render deployment config
-- client/ecosync-app: Expo app
-
-Architecture Overview
----------------------
 ```mermaid
 flowchart LR
 	User((User)) --> App[Expo Mobile App]
@@ -181,8 +117,10 @@ flowchart LR
 	App -->|Exports| Share[Share Sheet / Files]
 ```
 
-Data Flow (Prediction)
-----------------------
+[Back to top](#top)
+
+## Data Flow: Prediction
+
 ```mermaid
 sequenceDiagram
 	autonumber
@@ -198,8 +136,10 @@ sequenceDiagram
 	A-->>U: Charts + KPIs + Insights
 ```
 
-Data Flow (Bills)
------------------
+[Back to top](#top)
+
+## Data Flow: Bills
+
 ```mermaid
 sequenceDiagram
 	autonumber
@@ -213,170 +153,383 @@ sequenceDiagram
 	A-->>A: Render bill breakdown
 ```
 
-Mobile App (Expo)
------------------
-Location: client/ecosync-app
+[Back to top](#top)
 
-Key Features
-------------
-- Analysis dashboard (charts, heatmap, trends)
-- Home KPI summary synced from analysis
-- Bills calculator for Chennai TANGEDCO slabs
-- Export usage data as CSV; export bills as PDF/JPEG
+## Auth and Storage
 
-Run Locally
------------
-1) Install dependencies
+EcoSync uses Supabase for authentication and media storage. Sessions are persisted locally with AsyncStorage and auto-refresh behavior is enabled in the app.
 
-```bash
-cd client/ecosync-app
-npm install
+### Auth Flow
+
+```mermaid
+sequenceDiagram
+	autonumber
+	participant U as User
+	participant A as Expo App
+	participant S as Supabase Auth
+	participant L as AsyncStorage
+
+	U->>A: Sign up / Login
+	A->>S: Auth request
+	S-->>A: Session + tokens
+	A->>L: Persist session
+	A-->>U: Access granted
 ```
 
-2) Set environment variables
+### Storage Buckets
 
-Create client/ecosync-app/.env
+- `profiles`: profile images (upsert path pattern by user ID)
+- `posts`: post media (unique file path per upload)
+
+### Storage Flow (Uploads)
+
+```mermaid
+flowchart LR
+	App[Expo App] -->|uploadProfileImage| Profiles[Bucket: profiles]
+	App -->|uploadPostImage| Posts[Bucket: posts]
+	Profiles --> Public[Public URL]
+	Posts --> Public
+```
+
+### Implementation Notes
+
+- Profile image path pattern: `{userId}/profile.{ext}`
+- Post image path pattern: `{userId}/{timestamp}.{ext}`
+- Uploaded media URLs are returned and displayed in-app
+
+[Back to top](#top)
+
+## ML Model Training
+
+Notebook: `p2bl_project.ipynb`
+
+The training pipeline builds a `RandomForestRegressor` using Chennai home-energy data and persists the model to `.pkl` for backend inference.
+
+### Training Pipeline
+
+1. Load dataset from Google Drive
+2. Parse timestamp into `Hour`, `Day`, `Month`
+3. Split into train/test sets
+4. Train RandomForestRegressor
+5. Evaluate with MAE, RMSE, R2
+6. Save model to `.pkl`
+
+### Why RandomForestRegressor
+
+- Handles non-linear relationships between inputs and energy output
+- Stable with noisy real-world usage data
+- Works with minimal feature scaling
+- Good baseline performance with low tuning overhead
+
+### Notebook Training Flow
+
+```mermaid
+flowchart TD
+	A[Load CSV from Drive] --> B[Parse Timestamp]
+	B --> C[Create Hour/Day/Month]
+	C --> D[Drop Timestamp]
+	D --> E[Split Train/Test]
+	E --> F[Train Random Forest]
+	F --> G[Evaluate Metrics]
+	G --> H[Save Model .pkl]
+```
+
+### Random Forest Working (High Level)
+
+```mermaid
+flowchart LR
+	X[Input Features] --> T1[Tree 1]
+	X --> T2[Tree 2]
+	X --> T3[Tree 3]
+	T1 --> A[Average]
+	T2 --> A
+	T3 --> A
+	A --> Y[Final Prediction]
+```
+
+### Random Forest Intuition
+
+Random Forest builds many decision trees over random subsets of samples and features. Each tree predicts usage; the final output is the average across trees, improving robustness and reducing overfitting.
+
+[Back to top](#top)
+
+## Backend API
+
+### Base URL
+
+The mobile app reads API origin from:
+
+- `EXPO_PUBLIC_API_BASE`
+
+Example:
 
 ```dotenv
-EXPO_PUBLIC_API_BASE=https://YOUR-RENDER-APP.onrender.com
+EXPO_PUBLIC_API_BASE=https://YOUR-BACKEND.onrender.com
+```
+
+### Endpoints
+
+- `GET /` -> health/status response
+- `POST /predict` -> inference endpoint
+
+### Request JSON (`POST /predict`)
+
+```json
+{
+  "temperature": 32,
+  "humidity": 70,
+  "occupancy": 4,
+  "ac": 2,
+  "fan": 0.3,
+  "fridge": 0.1,
+  "plug": 0.5,
+  "kitchen": 0.7,
+  "pump": 0.2,
+  "lighting": 0.3,
+  "solar": 0.5
+}
+```
+
+### Response JSON
+
+```json
+{
+  "predicted_kwh": 5.42,
+  "co2_kg": 4.4444,
+  "highest_appliance": "AC",
+  "green_percent": 9.22,
+  "appliance_usage": {
+    "AC": 2,
+    "Fan": 0.3,
+    "Fridge": 0.1,
+    "Plug": 0.5,
+    "Kitchen": 0.7,
+    "Pump": 0.2,
+    "Lighting": 0.3
+  }
+}
+```
+
+### Validation and Runtime Notes
+
+- Request body uses Pydantic validation (`temperature`, `humidity`, `occupancy` are bounded).
+- Backend currently allows all CORS origins (`allow_origins=["*"]`) for demo/academic use.
+- Model file path is configurable via `MODEL_PATH` (default: `Energy_Usage_Prediction_Model.pkl`).
+
+[Back to top](#top)
+
+## Local Setup
+
+### Prerequisites
+
+- Node.js 18+
+- npm 9+
+- Python 3.10+
+- Expo CLI / `npx expo`
+
+### Setup Matrix
+
+| Target | Location | Command |
+|---|---|---|
+| Install mobile deps | `client/ecosync-app` | `npm install` |
+| Run Expo app | `client/ecosync-app` | `npx expo start` |
+| Create Python venv | repo root | `python -m venv venv` |
+| Activate venv (PowerShell) | repo root | `venv\Scripts\Activate.ps1` |
+| Install backend deps | repo root | `pip install -r requirements.txt` |
+| Run backend | repo root | `uvicorn main:app --reload --host 0.0.0.0 --port 10000` |
+
+### Environment Variables
+
+| Scope | Variable | Required | Purpose |
+|---|---|---|---|
+| Mobile | `EXPO_PUBLIC_API_BASE` | Yes | Backend API base URL |
+| Mobile | `EXPO_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
+| Mobile | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase public anon key |
+| Backend | `MODEL_PATH` | Optional | Override default model file path |
+| Backend | `PORT` | Optional | Server port (Render commonly uses `10000`) |
+
+### `.env` Example (`client/ecosync-app/.env`)
+
+```dotenv
+EXPO_PUBLIC_API_BASE=https://YOUR-BACKEND.onrender.com
 EXPO_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR_ANON_KEY
 ```
 
-3) Start the app
+[Back to top](#top)
 
-```bash
-npx expo start
+## Deployment
+
+### Render (Backend)
+
+`render.yaml` is currently present in the repo but has no service content, so deployment should be configured manually in Render.
+
+Manual steps:
+
+1. Push repository to GitHub.
+2. Create a new **Web Service** in Render.
+3. Set Build Command: `pip install -r requirements.txt`
+4. Set Start Command: `uvicorn main:app --host 0.0.0.0 --port 10000`
+5. Add environment variable if needed: `MODEL_PATH`
+6. Deploy and copy your Render service URL.
+7. Set `EXPO_PUBLIC_API_BASE` in the app environment to that URL.
+
+### EAS Build Profiles (from `client/ecosync-app/eas.json`)
+
+- `development`: internal distribution, development client enabled
+- `preview`: internal APK distribution for Android
+- `production`: app version auto-increment enabled
+
+Each profile expects these env keys to be available:
+- `EXPO_PUBLIC_API_BASE`
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+
+[Back to top](#top)
+
+## Billing Logic (Chennai TANGEDCO)
+
+Bill estimation in the mobile app follows these rules:
+
+- Bi-monthly unit estimate: `predicted_daily_kwh * 60`
+- Free tier: if bi-monthly units `<= 100`, final amount is `0`
+- Above 100 units: slab-wise tariff is applied cumulatively
+
+Configured slabs in app logic:
+
+- `0-400` -> `INR 4.95`
+- `401-500` -> `INR 6.65`
+- `501-600` -> `INR 8.80`
+- `601-800` -> `INR 9.95`
+- `801-1000` -> `INR 11.05`
+- `1000+` -> `INR 12.15`
+
+[Back to top](#top)
+
+## Testing Checklist
+
+- App boots to auth flow without crashes.
+- Route guard redirects correctly for:
+  - unauthenticated users
+  - authenticated users pending onboarding
+  - fully onboarded users
+- Analysis run returns prediction and persists result.
+- Home reads and displays persisted analysis summary.
+- Bills tab loads stored prediction and computes slabs correctly.
+- CSV export works from Analysis.
+- PDF and JPEG exports work from Bills.
+- Supabase login/signup/session restore works.
+- Profile image upload works and URL renders correctly.
+- Post creation/upload works and feed refreshes.
+- Backend `/predict` reachable from device/emulator.
+
+[Back to top](#top)
+
+## Troubleshooting
+
+### Quick Index
+
+- [Missing API base URL](#missing-api-base-url)
+- [Prediction request fails](#prediction-request-fails)
+- [Supabase auth/storage issues](#supabase-authstorage-issues)
+- [Build or EAS env mismatch](#build-or-eas-env-mismatch)
+- [Exports not working](#exports-not-working)
+
+### Missing API base URL
+
+If app startup throws missing `EXPO_PUBLIC_API_BASE`, confirm `client/ecosync-app/.env` exists and restart Expo after editing env values.
+
+### Prediction request fails
+
+- Verify backend is running and reachable from your device.
+- Confirm `EXPO_PUBLIC_API_BASE` points to the correct deployed/local API.
+- Check backend logs for validation errors on request payload.
+
+### Supabase auth/storage issues
+
+- Validate `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+- Check bucket names are exactly `profiles` and `posts`.
+- Ensure storage policies allow intended read/write operations.
+
+### Build or EAS env mismatch
+
+- Confirm EAS profile env values are set for the target profile.
+- Rebuild after changing env config.
+- If Android native state is stale, run a clean prebuild and rebuild.
+
+### Exports not working
+
+- CSV/PDF/JPEG exports require prediction data first.
+- On physical devices, confirm share sheet availability.
+- For JPEG capture, ensure bill report view has rendered before export.
+
+[Back to top](#top)
+
+## Project Structure
+
+```text
+ecosync/
+|-- main.py
+|-- requirements.txt
+|-- render.yaml
+|-- Energy_Usage_Prediction_Model.pkl
+|-- p2bl_project.ipynb
+|-- Readme.md
+`-- client/
+    `-- ecosync-app/
+        |-- app/
+        |   |-- _layout.tsx
+        |   |-- (auth)/
+        |   |   |-- _layout.tsx
+        |   |   |-- login.tsx
+        |   |   |-- signup.tsx
+        |   |   `-- onboarding.tsx
+        |   `-- (tabs)/
+        |       |-- _layout.tsx
+        |       |-- index.tsx
+        |       |-- analysis.tsx
+        |       |-- bills.tsx
+        |       |-- post.tsx
+        |       `-- profile.tsx
+        |-- lib/
+        |   |-- api.ts
+        |   |-- billing.ts
+        |   |-- energy-summary.ts
+        |   `-- supabase/
+        |       |-- client.ts
+        |       `-- storage.ts
+        |-- app.json
+        |-- eas.json
+        `-- package.json
 ```
 
-Backend (FastAPI)
------------------
-Location: main.py
+[Back to top](#top)
 
-Local Run
----------
-```bash
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --reload
-```
+## Roadmap
 
-API Contract
-------------
-Base URL
-- EXPO_PUBLIC_API_BASE
+- Add backend model version endpoint and metadata in API response.
+- Add automated tests for billing and prediction API contracts.
+- Add CI checks for lint, type-check, and backend smoke tests.
+- Improve post feed moderation and post lifecycle visibility.
+- Add a formal OSS license file and contribution templates.
 
-Endpoint
-- POST /predict
+[Back to top](#top)
 
-Request (JSON)
-```json
-{
-	"temperature": 32,
-	"humidity": 70,
-	"occupancy": 4,
-	"ac": 2,
-	"fan": 0.3,
-	"fridge": 0.1,
-	"plug": 0.5,
-	"kitchen": 0.7,
-	"pump": 0.2,
-	"lighting": 0.3,
-	"solar": 0.5
-}
-```
+## Contributing
 
-Response (JSON)
-```json
-{
-	"predicted_kwh": 5.42,
-	"co2_kg": 2.11,
-	"highest_appliance": "AC",
-	"green_percent": 21.4,
-	"appliance_usage": {
-		"AC": 2.2,
-		"Fan": 0.4,
-		"Refrigerator": 0.1
-	}
-}
-```
+1. Fork the repo and create a feature branch.
+2. Keep changes scoped and include clear commit messages.
+3. Run app/backend locally and verify checklist items you touched.
+4. Open a PR with:
+   - change summary
+   - screenshots (if UI changes)
+   - test notes
 
-Render Deployment
------------------
-This repo includes render.yaml for one-click deployment.
+[Back to top](#top)
 
-Steps
------
-1) Push this repo to GitHub.
-2) Create a new Web Service in Render and connect the repo.
-3) Render will read render.yaml and build the service.
-4) After deploy, copy the Render service URL and set it as:
+## License
 
-EXPO_PUBLIC_API_BASE=https://YOUR-RENDER-APP.onrender.com
-
-render.yaml (expected)
-----------------------
-- Build: pip install -r requirements.txt
-- Start: uvicorn main:app --host 0.0.0.0 --port 10000
-
-Notes
------
-- Render assigns port 10000 by default. Ensure your service binds to it.
-- If you need secrets, use Render environment variables (not in .env).
-
-Render Deployment (Clean Explanation)
--------------------------------------
-1) Render reads render.yaml to install dependencies and start FastAPI.
-2) Build step installs requirements.txt.
-3) Start step launches Uvicorn on 0.0.0.0 and port 10000.
-4) Render provides a public URL for your API.
-5) Set EXPO_PUBLIC_API_BASE to the Render URL for the mobile app.
-
-Environment Variables
----------------------
-Client (.env)
-- EXPO_PUBLIC_API_BASE
-- EXPO_PUBLIC_SUPABASE_URL
-- EXPO_PUBLIC_SUPABASE_ANON_KEY
-
-Server (Render)
-- Any model/config keys required by main.py (if applicable)
-
-Build Profiles
---------------
-Local Android build
-```bash
-cd client/ecosync-app/android
-./gradlew assembleRelease
-```
-
-EAS build
-```bash
-cd client/ecosync-app
-eas build -p android --profile preview
-```
-
-Bill Calculation (Chennai TANGEDCO)
------------------------------------
-- Bi-monthly billing: daily kWh x 60
-- Free tier: <=100 units
-- Slab-based pricing for units above 100
-
-Testing Checklist
------------------
-- App loads without crash
-- Run Analysis returns prediction and updates Home tab
-- Bills tab shows correct breakdown
-- Exports: CSV, PDF, JPEG
-- API reachable from mobile device
-
-Troubleshooting
----------------
-- If analysis fails: check EXPO_PUBLIC_API_BASE
-- If build fails: verify env vars included in EAS build
-- If splash is stale: run expo prebuild --clean and rebuild
-
-License
--------
 For academic use.
+
+[Back to top](#top)
+
