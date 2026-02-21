@@ -92,6 +92,7 @@ export default function Index() {
   };
 
   const runPrediction = async () => {
+    if (isLoading) return;
     setIsLoading(true);
     try {
       const data = await predict(inputs);
@@ -272,9 +273,27 @@ export default function Index() {
           <SliderField label={`Lighting: ${inputs.lighting.toFixed(2)}`} icon="bulb-outline" value={inputs.lighting} min={0} max={1} step={0.05} onChange={(val) => setField("lighting", Number(val.toFixed(2)))} />
           <SliderField label={`Solar: ${inputs.solar.toFixed(2)}`} icon="sunny-outline" value={inputs.solar} min={0} max={2} step={0.05} onChange={(val) => setField("solar", Number(val.toFixed(2)))} />
 
-          <TouchableOpacity style={styles.primaryBtn} onPress={runPrediction} disabled={isLoading}>
-            {isLoading ? <ActivityIndicator color="#001823" /> : <Text style={styles.primaryBtnText}>Run Analysis</Text>}
+          <TouchableOpacity
+            style={[styles.primaryBtn, isLoading && styles.primaryBtnDisabled]}
+            onPress={runPrediction}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <View style={styles.inlineRowCenter}>
+                <ActivityIndicator color="#FFFFFF" />
+                <Text style={styles.primaryBtnText}>Running Analysis...</Text>
+              </View>
+            ) : (
+              <Text style={styles.primaryBtnText}>Run Analysis</Text>
+            )}
           </TouchableOpacity>
+
+          {isLoading ? (
+            <View style={styles.loadingHint}>
+              <ActivityIndicator size="small" color={THEME.accent} />
+              <Text style={styles.loadingHintText}>Fetching prediction results...</Text>
+            </View>
+          ) : null}
         </View>
 
         {!result ? (
@@ -644,10 +663,25 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
   },
+  primaryBtnDisabled: {
+    opacity: 0.85,
+  },
   primaryBtnText: {
     color: "#FFFFFF",
     fontWeight: "800",
     fontSize: 16,
+  },
+  loadingHint: {
+    marginTop: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  loadingHintText: {
+    color: THEME.muted,
+    fontSize: 13,
+    fontWeight: "600",
   },
   secondaryBtn: {
     marginTop: 8,
